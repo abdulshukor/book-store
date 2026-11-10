@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Book catalog | Leaf & Lore{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div>
+    <div class="eyebrow"><svg class="icon icon-small"><use href="#i-sparkle"/></svg> THE COLLECTION</div>
+    <h1>Your book collection<span class="heading-period">.</span></h1>
+    <p>Thoughtfully organized. Effortlessly managed.</p>
+  </div>
+  <button type="button" class="btn btn-primary add-button" data-action="add" {% if api_error %}disabled{% endif %}>
+    <svg class="icon"><use href="#i-plus"/></svg> Add new book
+  </button>
+</section>
+
+{% if api_error %}
+<div class="api-warning" role="alert"><svg class="icon"><use href="#i-alert"/></svg><span><strong>We couldn't load your catalog.</strong> {{ api_error }}</span></div>
+{% endif %}
+
+<section class="stats-grid" aria-label="Inventory summary">
+  <article class="stat-card">
+    <div class="stat-top"><span>Total titles</span><span class="stat-icon stat-icon-amber"><svg class="icon"><use href="#i-book"/></svg></span></div>
+    <div class="stat-number">{{ stats.total_titles }}</div>
+    <span class="stat-foot"><span class="stat-indicator"></span> Unique books in your catalog</span>
+  </article>
+  <article class="stat-card">
+    <div class="stat-top"><span>Books in stock</span><span class="stat-icon stat-icon-purple"><svg class="icon"><use href="#i-package"/></svg></span></div>
+    <div class="stat-number">{{ '{:,}'.format(stats.total_copies) }}</div>
+    <span class="stat-foot"><span class="stat-indicator purple"></span> Copies across your shelves</span>
+  </article>
+  <article class="stat-card">
+    <div class="stat-top"><span>Inventory value</span><span class="stat-icon stat-icon-green"><svg class="icon"><use href="#i-wallet"/></svg></span></div>
+    <div class="stat-number">{{ stats.inventory_value | money }}</div>
+    <span class="stat-foot"><span class="stat-indicator green"></span> Based on current prices</span>
+  </article>
+</section>
+
+<section class="catalog-section" id="catalog">
+  <div class="section-title-row">
+    <div>
+      <div class="section-eyebrow">INVENTORY</div>
+      <h2>All your books <span class="count-bubble">{{ books | length }}</span></h2>
+    </div>
+    <span class="low-stock-summary">{{ stats.low_stock_titles }} low-stock {{ 'title' if stats.low_stock_titles == 1 else 'titles' }}</span>
+  </div>
+  <div class="catalog-card">
+    <form class="filters-bar" action="{{ url_for('index') }}#catalog" method="get" role="search">
+      <label class="search-field">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <span class="sr-only">Search by title, author, or ISBN</span>
+        <input name="q" type="search" value="{{ query }}" placeholder="Search by title, author, or ISBN..." maxlength="160">
+      </label>
+      <label class="genre-wrap"><span class="sr-only">Filter by genre</span>
+        <select name="genre" aria-label="Filter by genre">
+          <option value="">All genres</option>
+          {% for item in genres %}<option value="{{ item }}" {% if selected_genre == item %}selected{% endif %}>{{ item }}</option>{% endfor %}
+        </select>
+      </label>
+      <button type="submit" class="btn btn-filter">Search <svg class="icon icon-small"><use href="#i-arrow"/></svg></button>
+      {% if query or selected_genre %}<a href="{{ url_for('index') }}#catalog" class="clear-link">Clear</a>{% endif %}
+    </form>
+
+    {% if books %}
+    <div class="table-scroll">
+      <table class="books-table">
+        <thead><tr><th scope="col">BOOK</th><th scope="col">GENRE</th><th scope="col">PRICE</th><th scope="col">STOCK</th><th scope="col" class="action-heading">ACTIONS</th></tr></thead>
+        <tbody>
+        {% for book in books %}
+          <tr>
+            <td data-label="Book">
+              <div class="book-cell">
+                <span class="book-cover cover-{{ loop.index0 % 5 }}" aria-hidden="true"><span class="book-cover-line"></span><svg class="icon"><use href="#i-book"/></svg><span class="book-cover-monogram">{{ book.title[:1] | upper }}</span></span>
+                <span class="book-info"><strong title="{{ book.title }}">{{ book.title }}</strong><span>by {{ book.author }}</span><small>{{ book.isbn if book.isbn else 'No ISBN added' }}</small></span>
+              </div>
+            </td>
+            <td data-label="Genre"><span class="genre-badge">{{ book.genre }}</span></td>
+            <td data-label="Price"><span class="price">{{ book.price | money }}</span></td>
+            <td data-label="Stock"><span class="stock-badge {{ 'stock-empty' if book.quantity == 0 else 'stock-low' if book.quantity <= 5 else 'stock-good' }}"><span class="stock-dot"></span>{{ book.quantity }} {{ 'copy' if book.quantity == 1 else 'copies' }}</span></td>
+            <td data-label="Actions">
+              <div class="table-actions">
+                <button type="button" class="icon-button" data-action="edit" data-book='{{ book | tojson }}' aria-label="Edit {{ book.title }}" title="Edit book"><svg class="icon"><use href="#i-edit"/></svg></button>
+                <button type="button" class="icon-button danger-button" data-action="delete" data-id="{{ book.id }}" data-title="{{ book.title }}" aria-label="Delete {{ book.title }}" title="Delete book"><svg class="icon"><use href="#i-trash"/></svg></button>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <footer class="table-footer">Showing <strong>{{ books | length }}</strong> {{ 'book' if books | length == 1 else 'books' }} <span class="footer-dot">·</span> Made for the love of books</footer>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-illustration"><svg class="icon"><use href="{{ '#i-search' if query or selected_genre else '#i-books' }}"/></svg></div>
+        <h3>{{ 'No books match your search' if query or selected_genre else 'A blank page, full of possibility.' }}</h3>
+        <p>{{ 'Try a different title, author, ISBN or genre.' if query or selected_genre else 'Your collection is ready for its first chapter. Add your very first book to get started.' }}</p>
+        {% if not api_error and not (query or selected_genre) %}<button class="btn btn-primary" type="button" data-action="add"><svg class="icon"><use href="#i-plus"/></svg> Add your first book</button>{% endif %}
+        {% if query or selected_genre %}<a class="btn btn-secondary" href="{{ url_for('index') }}#catalog">Clear filters</a>{% endif %}
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<dialog class="book-dialog" id="book-dialog" aria-labelledby="book-dialog-title">
+  <div class="dialog-head"><div><span class="dialog-eyebrow" id="book-dialog-eyebrow">THE COLLECTION</span><h2 id="book-dialog-title">Add a new book</h2><p>Fill in the details of your book below.</p></div><button type="button" class="icon-button close-dialog" data-close="book-dialog" aria-label="Close"><svg class="icon"><use href="#i-close"/></svg></button></div>
+  <form id="book-form" action="{{ url_for('add_book') }}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="dialog-body">
+      <div class="form-field"><label for="book-title">Book title <span>*</span></label><input id="book-title" name="title" required maxlength="160" placeholder="e.g. The Midnight Library" autocomplete="off"></div>
+      <div class="form-grid"><div class="form-field"><label for="book-author">Author <span>*</span></label><input id="book-author" name="author" required maxlength="120" placeholder="e.g. Matt Haig"></div><div class="form-field"><label for="book-genre">Genre <span>*</span></label><input id="book-genre" name="genre" list="genre-suggestions" required maxlength="60" placeholder="e.g. Fiction"><datalist id="genre-suggestions"><option value="Fiction"><option value="Non-fiction"><option value="Fantasy"><option value="Mystery"><option value="Biography"><option value="Romance"><option value="Sci-Fi"><option value="History"><option value="Business"><option value="Self-help"></datalist></div></div>
+      <div class="form-field"><label for="book-isbn">ISBN <span class="optional">Optional</span></label><input id="book-isbn" name="isbn" maxlength="32" placeholder="e.g. 9780525559474"></div>
+      <div class="form-grid"><div class="form-field"><label for="book-price">Price <span>*</span></label><div class="input-prefix"><span>$</span><input id="book-price" name="price" type="number" step="0.01" min="0" max="99999999.99" required placeholder="0.00"></div></div><div class="form-field"><label for="book-quantity">Stock quantity <span>*</span></label><input id="book-quantity" name="quantity" type="number" step="1" min="0" max="1000000" required placeholder="0"></div></div>
+      <div class="form-field"><label for="book-description">Description <span class="optional">Optional</span></label><textarea id="book-description" name="description" rows="3" maxlength="1200" placeholder="A few words about this book..."></textarea></div>
+    </div>
+    <div class="dialog-footer"><button type="button" class="btn btn-secondary" data-close="book-dialog">Cancel</button><button type="submit" class="btn btn-primary" id="save-book-button">Add book <svg class="icon"><use href="#i-arrow"/></svg></button></div>
+  </form>
+</dialog>
+
+<dialog class="confirm-dialog" id="delete-dialog" aria-labelledby="delete-title">
+  <div class="confirm-inner"><div class="confirm-icon"><svg class="icon"><use href="#i-trash"/></svg></div><h2 id="delete-title">Remove this book?</h2><p>You're about to delete <strong id="delete-book-name"></strong>. This action can't be undone.</p>
+    <form id="delete-form" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><div class="confirm-actions"><button class="btn btn-secondary" type="button" data-close="delete-dialog">Cancel</button><button class="btn btn-danger" type="submit">Yes, delete book</button></div></form>
+  </div>
+</dialog>
+{% endblock %}

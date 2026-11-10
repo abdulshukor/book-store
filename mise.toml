@@ -1,0 +1,21 @@
+[tools]
+pipx = "latest"
+pre-commit = "latest"
+python = "3.13"
+ruff = "latest"
+uv = "latest"
+
+
+[settings]
+python.uv_venv_auto = true
+idiomatic_version_file_enable_tools = ["python"]
+experimental = true
+
+
+[env]
+APP_REPO = 'book-store'
+GITOPS_REPO = 'book-store-gitops'
+
+
+[hooks]
+enter = "bash ./scripts/setup_project"

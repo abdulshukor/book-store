@@ -5,7 +5,7 @@
   },
   "postCreateCommand": "scripts/setup",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:4": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:3": {}
   },
   "forwardPorts": [
     21001,

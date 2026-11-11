@@ -29,7 +29,7 @@ app.config.update(
     API_URL=os.getenv("API_URL", "http://127.0.0.1:21002").rstrip("/"),
     API_TIMEOUT=float(os.getenv("API_TIMEOUT", "5")),
     PORT=int(os.getenv("FRONTEND_PORT", "21001")),
-    HOST=os.getenv("FRONTEND_HOST", "127.0.0.1"),
+    HOST=os.getenv("FRONTEND_HOST", "0.0.0.0"),
     DEBUG=os.getenv("FLASK_DEBUG", "false").lower() == "true",
 )
 

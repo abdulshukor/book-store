@@ -3,6 +3,7 @@ pipx = "latest"
 pre-commit = "latest"
 python = "3.13"
 ruff = "latest"
+trivy = "latest"
 uv = "latest"
 
 

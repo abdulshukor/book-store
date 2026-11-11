@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 APP_NAME = os.getenv("APP_NAME", "Leaf & Lore Bookstore API")
-API_HOST = os.getenv("API_HOST", "127.0.0.1")
+API_HOST = os.getenv("API_HOST", "0.0.0.0")
 API_PORT = int(os.getenv("API_PORT", "21002"))
 DATA_DIR = Path(
     os.getenv("DATA_DIR", str(Path(__file__).resolve().parent.parent / "data"))
